@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>iMagnum Healthcare Solutions — SOP Dashboard</title>
+<style>
+  :root {
+    --brand:      #1a56a8;
+    --brand-dark: #103d80;
+    --brand-light:#e8f0fb;
+    --accent:     #0ea5e9;
+    --success:    #16a34a;
+    --text:       #1e293b;
+    --muted:      #64748b;
+    --border:     #e2e8f0;
+    --bg:         #f8fafc;
+    --white:      #ffffff;
+    --card-shadow: 0 4px 24px rgba(26,86,168,.10);
+    --radius:     14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── TOP BAR ── */
+  header {
+    background: linear-gradient(135deg, var(--brand-dark) 0%, var(--brand) 60%, #2d7be6 100%);
+    color: #fff;
+    padding: 0 32px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 12px rgba(0,0,0,.18);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { font-size: 1.15rem; font-weight: 700; letter-spacing: .3px; }
+  .logo span { opacity: .65; font-weight: 400; margin-left: 8px; }
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: .82rem;
+    opacity: .85;
+  }
+  .breadcrumb a { color: #fff; text-decoration: none; cursor: pointer; }
+  .breadcrumb a:hover { text-decoration: underline; }
+  .sep { opacity: .5; }
+
+  /* ── MAIN LAYOUT ── */
+  main { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* ── SCREEN TRANSITIONS ── */
+  .screen { display: none; animation: fadeIn .25s ease; }
+  .screen.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── DASHBOARD ── */
+  .page-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--brand-dark);
+  }
+  .page-sub {
+    color: var(--muted);
+    font-size: .95rem;
+    margin-bottom: 36px;
+  }
+
+  .sop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 28px;
+  }
+
+  .sop-card {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px 28px 28px;
+    cursor: pointer;
+    transition: transform .18s, box-shadow .18s, border-color .18s;
+    box-shadow: var(--card-shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  .sop-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 5px;
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .sop-card:nth-child(1)::before { background: linear-gradient(90deg, #1a56a8, #0ea5e9); }
+  .sop-card:nth-child(2)::before { background: linear-gradient(90deg, #7c3aed, #db2777); }
+  .sop-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(26,86,168,.16);
+    border-color: var(--brand);
+  }
+
+  .sop-icon {
+    width: 52px; height: 52px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem;
+    margin-bottom: 18px;
+  }
+  .sop-card:nth-child(1) .sop-icon { background: #e8f0fb; }
+  .sop-card:nth-child(2) .sop-icon { background: #f3e8ff; }
+
+  .sop-card h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+  .sop-card p  { font-size: .87rem; color: var(--muted); line-height: 1.6; margin-bottom: 18px; }
+
+  .sop-meta {
+    display: flex; gap: 12px; flex-wrap: wrap;
+  }
+  .badge {
+    font-size: .73rem; font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 99px;
+    border: 1.5px solid currentColor;
+    opacity: .8;
+  }
+  .badge.blue  { color: var(--brand); }
+  .badge.purple{ color: #7c3aed; }
+  .badge.green { color: var(--success); }
+
+  .step-count {
+    position: absolute;
+    top: 22px; right: 22px;
+    font-size: .75rem; font-weight: 700;
+    color: var(--muted);
+    background: var(--bg);
+    border-radius: 99px;
+    padding: 3px 10px;
+    border: 1px solid var(--border);
+  }
+
+  .arrow-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: .83rem; font-weight: 600;
+    color: var(--brand);
+    margin-top: 6px;
+  }
+  .arrow-btn svg { transition: transform .15s; }
+  .sop-card:hover .arrow-btn svg { transform: translateX(4px); }
+
+  /* ── WORKFLOW SCREEN ── */
+  .back-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: .85rem; font-weight: 600;
+    color: var(--brand);
+    cursor: pointer;
+    margin-bottom: 28px;
+    background: none; border: none; padding: 0;
+  }
+  .back-btn:hover { text-decoration: underline; }
+
+  .wf-header {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    border: 1.5px solid var(--border);
+    box-shadow: var(--card-shadow);
+    margin-bottom: 32px;
+  }
+  .wf-header h1 { font-size: 1.35rem; font-weight: 700; margin-bottom: 8px; }
+  .wf-header p  { color: var(--muted); font-size: .9rem; line-height: 1.7; }
+  .wf-header .meta-row {
+    display: flex; gap: 24px; flex-wrap: wrap;
+    margin-top: 16px; padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: .82rem; color: var(--muted);
+  }
+  .wf-header .meta-row strong { color: var(--text); }
+
+  /* Source files table */
+  .sources-box {
+    background: var(--brand-light);
+    border: 1.5px solid #c3d9f5;
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin-top: 20px;
+    margin-bottom: 4px;
+  }
+  .sources-box h3 { font-size: .88rem; font-weight: 700; color: var(--brand-dark); margin-bottom: 12px; }
+  .source-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+  .source-table th { text-align: left; padding: 4px 10px 8px; color: var(--muted); font-weight: 600; font-size: .75rem; text-transform: uppercase; letter-spacing: .5px; }
+  .source-table td { padding: 6px 10px; vertical-align: top; line-height: 1.5; }
+  .source-table tr:not(:last-child) td { border-bottom: 1px solid #d0e4f7; }
+  .source-table td:first-child { font-weight: 600; color: var(--brand-dark); white-space: nowrap; }
+
+  /* Steps list */
+  .steps-label {
+    font-size: .75rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .step-card {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 22px;
+    cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    transition: transform .16s, box-shadow .16s, border-color .16s;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(26,86,168,.06);
+  }
+  .step-card:hover {
+    transform: translateX(4px);
+    border-color: var(--accent);
+    box-shadow: 0 4px 18px rgba(14,165,233,.14);
+  }
+
+  .step-num {
+    min-width: 38px; height: 38px;
+    border-radius: 50%;
+    background: var(--brand-light);
+    color: var(--brand);
+    font-weight: 700; font-size: .88rem;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .step-body h3  { font-size: .97rem; font-weight: 700; margin-bottom: 4px; }
+  .step-body p   { font-size: .82rem; color: var(--muted); line-height: 1.55; }
+
+  .step-chevron  { margin-left: auto; color: var(--muted); flex-shrink: 0; padding-top: 2px; }
+
+  /* ── DETAIL SCREEN ── */
+  .detail-header {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 26px 30px;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 24px;
+  }
+  .detail-header .step-tag {
+    font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .8px;
+    color: var(--accent); margin-bottom: 8px;
+  }
+  .detail-header h1 { font-size: 1.25rem; font-weight: 700; }
+
+  .detail-body {
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    box-shadow: var(--card-shadow);
+    line-height: 1.8;
+    font-size: .9rem;
+  }
+
+  .detail-body h4 {
+    font-size: .83rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .6px; color: var(--brand);
+    margin: 22px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1.5px solid var(--brand-light);
+  }
+  .detail-body h4:first-child { margin-top: 0; }
+
+  .detail-body p   { margin-bottom: 12px; color: var(--text); }
+  .detail-body ul  { padding-left: 22px; margin-bottom: 12px; }
+  .detail-body li  { margin-bottom: 6px; }
+  .detail-body code {
+    background: #f1f5f9; border: 1px solid var(--border);
+    border-radius: 4px; padding: 1px 6px;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: .82rem; color: #0f5196;
+  }
+  .detail-body strong { font-weight: 700; }
+  .highlight-box {
+    background: #fefce8; border: 1.5px solid #fde68a;
+    border-radius: 8px; padding: 14px 18px;
+    margin: 14px 0; font-size: .85rem; color: #78350f;
+  }
+  .highlight-box strong { color: #92400e; }
+
+  .nav-btns {
+    display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end;
+  }
+  .nav-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-size: .85rem; font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid var(--border);
+    background: var(--white);
+    color: var(--text);
+    transition: all .15s;
+  }
+  .nav-btn:hover { border-color: var(--brand); color: var(--brand); }
+  .nav-btn.primary { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .nav-btn.primary:hover { background: var(--brand-dark); }
+  .nav-btn:disabled { opacity: .4; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">iMagnum Healthcare Solutions <span>FP&A SOPs</span></div>
+  <nav class="breadcrumb" id="breadcrumb">
+    <a onclick="goHome()">Dashboard</a>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ══ SCREEN 1: DASHBOARD ══ -->
+  <div class="screen active" id="screen-home">
+    <div class="page-title">SOP Dashboard</div>
+    <div class="page-sub">Select a Standard Operating Procedure to view its workflow and step-by-step guide.</div>
+
+    <div class="sop-grid">
+
+      <!-- Card 1 -->
+      <div class="sop-card" onclick="openSOP(0)">
+        <span class="step-count">7 Steps</span>
+        <div class="sop-icon">📊</div>
+        <h2>Client-wise Gross Margin Analysis</h2>
+        <p>Monthly gross profit forecast by client — allocates all direct costs (manpower, transport, facilities, bench) to individual clients and reconciles back to the Proforma P&L.</p>
+        <div class="sop-meta">
+          <span class="badge blue">Finance / FP&A</span>
+          <span class="badge green">Monthly</span>
+          <span class="badge blue">Excel</span>
+        </div>
+        <div class="arrow-btn" style="margin-top:18px;">
+          View Workflow
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="sop-card" onclick="openSOP(1)">
+        <span class="step-count">5 Steps</span>
+        <div class="sop-icon">📋</div>
+        <h2>Monthly Proforma P&L Update</h2>
+        <p>Refreshes the consolidated Proforma P&L with the latest revenue forecast and budget-linked expenses, reconciled against the MIS, reported in USD.</p>
+        <div class="sop-meta">
+          <span class="badge purple">Finance / FP&A</span>
+          <span class="badge green">Monthly</span>
+          <span class="badge purple">Excel</span>
+        </div>
+        <div class="arrow-btn" style="margin-top:18px;">
+          View Workflow
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+          </svg>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ SCREEN 2: WORKFLOW ══ -->
+  <div class="screen" id="screen-workflow">
+    <button class="back-btn" onclick="goHome()">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+      </svg>
+      Back to Dashboard
+    </button>
+
+    <div class="wf-header" id="wf-header"></div>
+
+    <div class="steps-label">WORKFLOW STEPS — click a step for full details</div>
+    <div id="steps-list"></div>
+  </div>
+
+  <!-- ══ SCREEN 3: STEP DETAIL ══ -->
+  <div class="screen" id="screen-detail">
+    <button class="back-btn" id="back-to-workflow" onclick="goWorkflow()">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+      </svg>
+    </button>
+
+    <div class="detail-header" id="detail-header"></div>
+    <div class="detail-body"  id="detail-body"></div>
+
+    <div class="nav-btns">
+      <button class="nav-btn" id="btn-prev" onclick="navStep(-1)">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Previous Step
+      </button>
+      <button class="nav-btn primary" id="btn-next" onclick="navStep(1)">
+        Next Step
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ═══════════════════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════════════════
+const SOPS = [
+  {
+    id: 0,
+    title: "Client-wise Gross Margin Analysis",
+    subtitle: "iMagnum Healthcare Solutions — Monthly Gross Profit Forecast by Client",
+    function: "Finance / FP&A",
+    entity: "iMagnum Healthcare Solutions",
+    frequency: "Monthly (forecast)",
+    purpose: "Defines the standard, repeatable method for producing the client-wise gross margin (gross profit) analysis for iMagnum on a monthly basis. Takes each client's revenue and assigns all directly attributable operating costs so that gross profit can be reported and forecast at the individual client level. Supports profitability monitoring, pricing/renewal decisions, and bench-cost control.",
+    sources: [
+      { num:"1", name:"Prior-month client gross margin file", use:"Working template. Copy last month's file (e.g. May), rename to the new month (June), and update every May reference to June. Do not build from scratch." },
+      { num:"2", name:"WFM Report (Workforce Management)", use:"FTE / project allocation per employee. Drives manpower allocation for direct, ops support, quality and ops leadership." },
+      { num:"3", name:"MIS – Payroll / Salary Analysis", use:"Original CTC / salaries by employee for direct, ops support and ops leadership. Joined to the WFM allocation to convert FTE into rupee cost." },
+      { num:"4", name:"Proforma P&L for the month", use:"Source of non-manpower direct costs — transportation, facilities, telecom & data, software, other COGS — and the consolidated gross-profit control total." },
+      { num:"5", name:"Revenue Forecast", use:"Client-wise revenue for the month, provided by the business. Used as the top line and for revenue-share allocation of un-bifurcated costs." },
+    ],
+    steps: [
+      {
+        num: "0",
+        title: "Set up the working file",
+        summary: "Open and rename the previous month's file; update all month references.",
+        detail: `
+          <h4>What to do</h4>
+          <p>Open the <strong>previous month's working file</strong>. Navigate to:<br>
+          <code>iMagnum folder → 2026-27 → 03. June 2026 → Client-wise GM – June 2026</code></p>
+          <p>Do <strong>not</strong> build a new file from scratch — always start from the prior month's template.</p>
+
+          <h4>Updates required</h4>
+          <ul>
+            <li>Rename the file from the old month to the new month (e.g. May → June).</li>
+            <li>Update <strong>every sheet name</strong> that references the old month.</li>
+            <li>Update all <strong>column headers and labels</strong> within the sheets.</li>
+            <li>Update any cell text that shows the prior month name.</li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>⚠️ Do a Find &amp; Replace (Ctrl+H)</strong> across the entire workbook for the old month string (e.g. "May") → "June" to ensure nothing is missed. Review results before accepting all.
+          </div>
+        `
+      },
+      {
+        num: "1",
+        title: "Build the FTE pivots from the MRF Forecast",
+        summary: "Create one FTE PivotTable per delivery function (Direct, Ops Support & Quality, Leadership).",
+        detail: `
+          <h4>Overview</h4>
+          <p>Open the <strong>MRF Forecast with FTE Requirement</strong> file. You will build three separate FTE pivots — one for each function.</p>
+
+          <h4>Direct employees</h4>
+          <ul>
+            <li>Go to the <strong>User vs Client Assign</strong> sheet.</li>
+            <li>Insert a PivotTable on a <strong>new sheet</strong>.</li>
+            <li>Layout: <code>Rows = Client</code>, <code>Values = FTE Deployed (Sum)</code>.</li>
+            <li><strong>Paste the pivot output as values</strong> beside it to create a flat table for the SUMIF formula used in Step 2.</li>
+          </ul>
+
+          <h4>Ops Support &amp; Quality</h4>
+          <ul>
+            <li>Go to the <strong>Ops Support</strong> sheet, select columns <code>A to L</code>.</li>
+            <li>Insert a PivotTable on a separate sheet.</li>
+            <li>Layout: <code>Rows = Client</code>, <code>Columns = Team</code>, <code>Values = Sum of FTE Deployed</code>.</li>
+            <li>Group <strong>MIS</strong> and <strong>Business Excellence</strong> under <em>Ops Support</em>, so each client has a clean Ops Support and Quality split.</li>
+          </ul>
+
+          <h4>Leadership</h4>
+          <ul>
+            <li>Create a separate <strong>Leaders Mapping</strong> sheet in vertical/tabular format.</li>
+            <li>Columns needed: <code>Client | Project | Role | Name | Emp ID | Salary | Revenue | Split % | Salary Split</code></li>
+            <li>Populate <strong>Salary</strong> via VLOOKUP on Emp ID from the latest MIS.</li>
+            <li>Populate <strong>Revenue</strong> via VLOOKUP from the revenue forecast sheet.</li>
+            <li>Calculate <code>Split % = Client Revenue / Employee Total Revenue across all projects</code>.</li>
+            <li>Calculate <code>Salary Split = Split % × Salary</code>.</li>
+            <li>Build a PivotTable from this range: <code>Rows = Client</code>, <code>Values = Split % (number)</code> to get the leadership allocation per client.</li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>Note:</strong> The Salary Split column from the Leaders Mapping pivot is what feeds the leadership salary cost in Step 3.
+          </div>
+        `
+      },
+      {
+        num: "2",
+        title: "Pull FTE into the Client-wise GM sheet (SUMIF)",
+        summary: "Write SUMIF formulas for Direct, Ops Support, Quality and Leadership FTE columns.",
+        detail: `
+          <h4>Add FTE columns</h4>
+          <p>In the <strong>Client-wise GM sheet</strong>, add <strong>four columns</strong> in front of the respective team cost blocks:</p>
+          <ul>
+            <li>Direct FTE</li>
+            <li>Ops Support FTE</li>
+            <li>Quality FTE</li>
+            <li>Leadership FTE</li>
+          </ul>
+
+          <h4>Write the SUMIF formula</h4>
+          <p>For each column, write a SUMIF pointing to the relevant MRF flat table created in Step 1:</p>
+          <p><code>=SUMIF([MRF Client column], [Client-wise GM client name], [MRF FTE column])</code></p>
+
+          <h4>Reconcile</h4>
+          <ul>
+            <li>Confirm the <strong>total FTE</strong> pulled into the Client-wise GM sheet equals the pivot total and the WFM source for <em>every</em> function.</li>
+            <li>If client names differ between the Client-wise GM sheet and the MRF file, create a <strong>dummy mapping column</strong> that restates the Client-wise GM client names exactly as they appear in the MRF Forecast.</li>
+            <li>Every client must match — nothing should be left un-allocated.</li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>⚠️ Reconciliation is mandatory.</strong> A mismatch in FTE at this stage will cascade errors into salary costs, cost allocation, and the final gross profit figure.
+          </div>
+        `
+      },
+      {
+        num: "3",
+        title: "Build salary cost (Direct, Ops Support / Quality, Leadership)",
+        summary: "Attach salary to each function's FTE allocation to derive rupee cost per client.",
+        detail: `
+          <h4>Direct employees</h4>
+          <ul>
+            <li>On the <strong>User vs Client Assign</strong> sheet, add two columns:</li>
+            <li><strong>Salary</strong> — VLOOKUP by Emp ID from the latest MIS.</li>
+            <li><strong>Salary Split</strong> = <code>Salary × FTE Deployed</code>.</li>
+            <li>Build a pivot: <code>Rows = Client</code>, <code>Values = Sum of Salary Split</code>.</li>
+          </ul>
+
+          <h4>Ops Support &amp; Quality</h4>
+          <ul>
+            <li>On the <strong>Ops Support</strong> sheet, add the same two columns (<em>Salary</em> and <em>Salary Split</em>).</li>
+            <li>Build a pivot on a separate sheet: <code>Rows = Client</code>, <code>Values = Sum of Salary Split</code>.</li>
+            <li>This gives the combined QA + Ops Support salary by client.</li>
+          </ul>
+
+          <h4>Leadership</h4>
+          <ul>
+            <li>The Salary Split is already calculated in the <strong>Leaders Mapping pivot</strong> built in Step 1.</li>
+            <li>No additional work needed here — reference those figures directly.</li>
+          </ul>
+        `
+      },
+      {
+        num: "4",
+        title: "Assign salaries to the Client-wise GM sheet (LOOKUP)",
+        summary: "Pull each function's salary cost into the main sheet using LOOKUPs against the dummy name mapping.",
+        detail: `
+          <h4>What to do</h4>
+          <p>In the <strong>Client-wise GM sheet</strong>, insert a <strong>lookup column in front of each function's salary block</strong>:</p>
+          <ul>
+            <li>Direct salary block</li>
+            <li>Ops Support salary block</li>
+            <li>Quality salary block</li>
+            <li>Leadership salary block</li>
+          </ul>
+
+          <h4>LOOKUP logic</h4>
+          <ul>
+            <li>Key each VLOOKUP on the <strong>dummy client-name mapping column</strong> created in Step 2 (the MRF-aligned names).</li>
+            <li>This ensures every function's salary lands against the correct client row, even where names differ between sheets.</li>
+            <li>Populate salary for <strong>all four functions</strong> across every client row.</li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>Check:</strong> After populating, verify that no client shows a zero or blank salary where FTE &gt; 0. A missing name match is the most common error at this stage.
+          </div>
+        `
+      },
+      {
+        num: "5",
+        title: "Allocate other direct costs",
+        summary: "Distribute transportation, facilities, telecom/data and other COGS from the Proforma P&L to each client.",
+        detail: `
+          <h4>Source</h4>
+          <p>Open the <strong>Proforma P&L</strong> for the month. Extract the following totals:</p>
+          <ul>
+            <li>Transportation</li>
+            <li>Facilities</li>
+            <li>Telecom / Data</li>
+            <li>Other COGS</li>
+          </ul>
+          <p>Enter these totals just <strong>below the corresponding cost ranges</strong> in the Client-wise GM sheet as reference figures.</p>
+
+          <h4>Allocation method</h4>
+          <ul>
+            <li><strong>Facilities, Telecom/Data, Other COGS:</strong> compute a <code>per-FTE rate = Total Cost ÷ Total FTE</code> and multiply by each client's FTE.</li>
+            <li><strong>Transportation:</strong> divide the total transport cost <em>only across clients that use the cab facility</em>, then charge each client by its actual usage proportion.</li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>Important:</strong> Not all clients use transport. Confirm which clients are on the cab roster before allocating transport costs — do not spread it equally across all clients.
+          </div>
+        `
+      },
+      {
+        num: "6",
+        title: "Distribute common (bench) cost and reconcile gross profit",
+        summary: "Spread bench cost across clients by FTE share, then tie gross profit back to the Proforma P&L.",
+        detail: `
+          <h4>Tie out revenue</h4>
+          <ul>
+            <li>Open the <strong>Proforma P&L</strong> and confirm total revenue matches.</li>
+            <li>If it differs, use the revenue from the <strong>revenue forecast sheet</strong> (provided by the business) — do not force-match the Proforma.</li>
+          </ul>
+
+          <h4>Confirm other direct costs</h4>
+          <p>Verify that Transportation, Facilities, Telecom/Data and Other COGS entered in Step 5 match the Proforma P&L exactly.</p>
+
+          <h4>Distribute bench cost</h4>
+          <ul>
+            <li>The remaining gap between the sum of client-wise costs and the Proforma gross profit is the <strong>common (bench) cost</strong>.</li>
+            <li>Distribute it across clients in proportion to each client's <code>FTE share of total FTE</code>.</li>
+          </ul>
+
+          <h4>Gross profit formula</h4>
+          <p><strong>Gross Profit = Revenue − (Direct + Ops Support + Quality + Leadership Salaries + Transportation + Facilities + Telecom/Data + Other COGS + Allocated Bench Cost)</strong></p>
+          <p>Once bench is posted, the sum of all client-wise gross profit figures must tie back to the Proforma P&L consolidated gross profit.</p>
+
+          <h4>Finalisation checklist</h4>
+          <ul>
+            <li>Remove all <strong>external workbook links</strong> — the deliverable must stand alone with no live links to other files.</li>
+            <li>Verify the gross-profit reconciliation on the <strong>values-only</strong> file (after links are removed).</li>
+            <li>Save with the agreed file name for the month.</li>
+            <li>Circulate for review.</li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>Final check:</strong> Sum of client gross profits = Proforma P&L gross profit. If there is any gap after distributing bench, recheck Step 5 allocations and the revenue tie-out.
+          </div>
+        `
+      },
+    ]
+  },
+  {
+    id: 1,
+    title: "Monthly Proforma P&L Update",
+    subtitle: "iMagnum Healthcare Solutions — Proforma P&L Forecast",
+    function: "Finance / FP&A",
+    entity: "iMagnum Healthcare Solutions",
+    frequency: "Monthly (forecast)",
+    purpose: "Defines the standard monthly method for refreshing the Proforma P&L for iMagnum. The Proforma carries the latest closed month as Actuals and the current month as a Forecast, with revenue taken from the business and every expense line driven from the annual budget and validated against the latest MIS.",
+    sources: [
+      { num:"1", name:"Proforma P&L", use:"iMagnum folder → 03. June 2026 → FP&A → P&L Proforma June 26 (sheet: Consolidated P&L MoM $). This is the working file being updated." },
+      { num:"2", name:"Annual Budget", use:"iMagnum folder → 2026 Budget → iMagnum Budget CY 2026_V9. Expense source for every line item." },
+      { num:"3", name:"Revenue Forecast", use:"Client revenue for the month, provided by the business. Drives all Service Income lines." },
+      { num:"4", name:"Latest MIS", use:"Used to catch any expense head incurred that is not yet in the budget — new vendors, subscriptions, salary lines, or statutory items." },
+    ],
+    steps: [
+      {
+        num: "0",
+        title: "Open the files and set the month",
+        summary: "Open the Proforma P&L and the budget workbook; confirm column headers are correct.",
+        detail: `
+          <h4>Files to open</h4>
+          <ul>
+            <li><strong>Proforma P&L:</strong> <code>iMagnum folder → 03. June 2026 → FP&A → P&L Proforma June 26</code><br>
+            Navigate to the sheet <strong>Consolidated P&L MoM $</strong>.</li>
+            <li><strong>Annual Budget:</strong> <code>iMagnum folder → 2026 Budget → iMagnum Budget CY 2026_V9</code></li>
+          </ul>
+
+          <h4>Confirm the month columns</h4>
+          <ul>
+            <li><strong>Column B</strong> = latest closed month (Actuals).</li>
+            <li><strong>Column C</strong> = the forecast month being prepared (e.g. Jun-2026).</li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>Check the header first.</strong> Confirm the column C header shows the correct forecast month before making any edits. Entering data in the wrong column is a common error.
+          </div>
+        `
+      },
+      {
+        num: "1",
+        title: "Update revenue",
+        summary: "Enter the client revenue from the business-provided revenue forecast into Total Revenue.",
+        detail: `
+          <h4>What to do</h4>
+          <p>Take the client revenue from the <strong>revenue forecast sent by the business</strong> (this is a separate file/email provided by the business team — do not derive it from the budget).</p>
+          <p>Enter it against the <strong>Total Revenue</strong> line in Column C (the Forecast column) of the Consolidated P&L MoM $ sheet.</p>
+
+          <div class="highlight-box">
+            <strong>Important:</strong> The revenue forecast is provided by the business and is distinct from the budget and the cash-flow revenue line. Do not substitute one for the other. If in doubt, confirm the source with the business team before entry.
+          </div>
+        `
+      },
+      {
+        num: "2",
+        title: "Link expenses from the budget",
+        summary: "Enter each expense line from the Annual Budget (India + US sheets) into the Proforma.",
+        detail: `
+          <h4>Open the budget sheets</h4>
+          <p>In <strong>iMagnum Budget CY 2026_V9</strong>, open two sheets:</p>
+          <ul>
+            <li><strong>India Expenses – Detailed</strong></li>
+            <li><strong>5. US Expenses</strong></li>
+          </ul>
+
+          <h4>Expense lines to enter</h4>
+          <p>Enter each of the following line items by name into the corresponding block in the Proforma P&L:</p>
+          <ul>
+            <li>Manpower</li>
+            <li>Facility Cost</li>
+            <li>Telecom / Data &amp; Others</li>
+            <li>Transport and Other COGS</li>
+            <li>India Salaries</li>
+            <li>G&amp;A Expenses</li>
+            <li>Sales &amp; Marketing Expenses</li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>Consolidated lines (India + US):</strong> Where a line item appears under the same head in both the India and US sheets — for example, G&amp;A — <strong>add both figures together</strong> and enter the consolidated amount against that single head in the Proforma. Do not create duplicate rows.
+          </div>
+        `
+      },
+      {
+        num: "4",
+        title: "Reconcile to the latest MIS and add new heads",
+        summary: "Compare MIS expense heads against the budget; add any new items to the Proforma and back into the budget.",
+        detail: `
+          <h4>What to do</h4>
+          <ul>
+            <li>Open the <strong>latest MIS</strong>.</li>
+            <li>Compare every expense head in the MIS against what the budget (and therefore the Proforma) already carries.</li>
+          </ul>
+
+          <h4>New expense heads</h4>
+          <p>For any expense in the MIS <strong>not yet in the budget</strong> — a new vendor, subscription, salary line, or statutory item — do the following:</p>
+          <ul>
+            <li><strong>Add it to the Proforma</strong> against the correct expense block.</li>
+            <li><strong>Add the same line back into the budget detail</strong> (India or US Expenses sheet) so it carries forward automatically in future months.</li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>Why this matters:</strong> If a new cost is only added to the Proforma but not the budget, it will disappear next month when the Proforma is refreshed from the budget. Always update both files.
+          </div>
+        `
+      },
+      {
+        num: "5",
+        title: "Check assumptions and validate",
+        summary: "Verify all key totals foot correctly and check for formula errors before circulating.",
+        detail: `
+          <h4>Totals to verify</h4>
+          <p>Confirm that every one of the following lines calculates correctly and ties out:</p>
+          <ul>
+            <li><strong>Total Revenue</strong></li>
+            <li><strong>Total Operational Expenses</strong></li>
+            <li><strong>Gross Profit</strong></li>
+            <li><strong>Gross Margin %</strong></li>
+            <li><strong>Total S&M (Sales &amp; Marketing)</strong></li>
+            <li><strong>Total SG&A</strong></li>
+            <li><strong>EBITDA</strong></li>
+          </ul>
+
+          <h4>Spot-check</h4>
+          <p>Spot-check <strong>2–3 individual expense lines</strong> back to the corresponding budget column to confirm the link is pulling the correct figure.</p>
+
+          <h4>Formula error check</h4>
+          <ul>
+            <li>Ensure there are <strong>no formula errors</strong> anywhere in the sheet: <code>#REF!</code>, <code>#DIV/0!</code>, <code>#N/A</code>.</li>
+            <li>Use <strong>Ctrl+End</strong> to find the last used cell and scan the full sheet range.</li>
+            <li>Use <strong>Formulas → Error Checking</strong> in Excel to catch any hidden errors.</li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>Final step:</strong> Once all checks pass, save the file and circulate for review. Do not share before the formula-error check is complete.
+          </div>
+        `
+      },
+    ]
+  }
+];
+
+// ═══════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════
+let currentSOPIdx  = null;
+let currentStepIdx = null;
+
+// ═══════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function goHome() {
+  currentSOPIdx = null; currentStepIdx = null;
+  updateBreadcrumb([]);
+  showScreen('screen-home');
+}
+
+function goWorkflow() {
+  currentStepIdx = null;
+  const sop = SOPS[currentSOPIdx];
+  updateBreadcrumb([{ label: sop.title }]);
+  showScreen('screen-workflow');
+}
+
+function updateBreadcrumb(items) {
+  const bc = document.getElementById('breadcrumb');
+  let html = `<a onclick="goHome()">Dashboard</a>`;
+  items.forEach((item, i) => {
+    html += `<span class="sep">›</span>`;
+    if (item.action) {
+      html += `<a onclick="${item.action}">${item.label}</a>`;
+    } else {
+      html += `<span>${item.label}</span>`;
+    }
+  });
+  bc.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════
+//  OPEN SOP
+// ═══════════════════════════════════════════════════════
+function openSOP(idx) {
+  currentSOPIdx = idx;
+  const sop = SOPS[idx];
+
+  // Build header
+  let sourcesHTML = `<table class="source-table">
+    <tr><th>#</th><th>File</th><th>What it provides</th></tr>
+    ${sop.sources.map(s => `<tr>
+      <td>${s.num}</td>
+      <td>${s.name}</td>
+      <td>${s.use}</td>
+    </tr>`).join('')}
+  </table>`;
+
+  document.getElementById('wf-header').innerHTML = `
+    <h1>${sop.title}</h1>
+    <p>${sop.purpose}</p>
+    <div class="meta-row">
+      <div><strong>Function:</strong> ${sop.function}</div>
+      <div><strong>Entity:</strong> ${sop.entity}</div>
+      <div><strong>Frequency:</strong> ${sop.frequency}</div>
+      <div><strong>Steps:</strong> ${sop.steps.length}</div>
+    </div>
+    <div class="sources-box">
+      <h3>Source Files Required</h3>
+      ${sourcesHTML}
+    </div>
+  `;
+
+  // Build steps
+  const list = document.getElementById('steps-list');
+  list.innerHTML = sop.steps.map((step, i) => `
+    <div class="step-card" onclick="openStep(${i})">
+      <div class="step-num">${step.num}</div>
+      <div class="step-body">
+        <h3>${step.title}</h3>
+        <p>${step.summary}</p>
+      </div>
+      <div class="step-chevron">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+        </svg>
+      </div>
+    </div>
+  `).join('');
+
+  updateBreadcrumb([
+    { label: sop.title }
+  ]);
+  showScreen('screen-workflow');
+}
+
+// ═══════════════════════════════════════════════════════
+//  OPEN STEP
+// ═══════════════════════════════════════════════════════
+function openStep(stepIdx) {
+  currentStepIdx = stepIdx;
+  renderStep();
+  const sop = SOPS[currentSOPIdx];
+  document.getElementById('back-to-workflow').innerHTML = `
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+    </svg>
+    Back to ${sop.title}
+  `;
+  updateBreadcrumb([
+    { label: sop.title, action: 'goWorkflow()' },
+    { label: `Step ${sop.steps[stepIdx].num}: ${sop.steps[stepIdx].title}` }
+  ]);
+  showScreen('screen-detail');
+}
+
+function renderStep() {
+  const sop  = SOPS[currentSOPIdx];
+  const step = sop.steps[currentStepIdx];
+  const total = sop.steps.length;
+
+  document.getElementById('detail-header').innerHTML = `
+    <div class="step-tag">Step ${step.num} of ${total - 1} &nbsp;·&nbsp; ${sop.title}</div>
+    <h1>${step.title}</h1>
+  `;
+  document.getElementById('detail-body').innerHTML = step.detail;
+
+  const btnPrev = document.getElementById('btn-prev');
+  const btnNext = document.getElementById('btn-next');
+  btnPrev.disabled = currentStepIdx === 0;
+  btnNext.textContent = currentStepIdx === total - 1 ? 'Finish' : 'Next Step';
+  if (currentStepIdx === total - 1) {
+    btnNext.innerHTML = 'Finish ✓';
+  } else {
+    btnNext.innerHTML = `Next Step <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>`;
+  }
+}
+
+function navStep(dir) {
+  const sop = SOPS[currentSOPIdx];
+  const next = currentStepIdx + dir;
+  if (next < 0) return;
+  if (next >= sop.steps.length) { goWorkflow(); return; }
+  currentStepIdx = next;
+  renderStep();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
