@@ -293,6 +293,22 @@
   }
   .highlight-box strong { color: #92400e; }
 
+  .why-box {
+    background: #f0fdf4; border: 1.5px solid #86efac;
+    border-radius: 8px; padding: 14px 18px;
+    margin: 14px 0; font-size: .85rem; color: #14532d;
+  }
+  .why-box strong { color: #166534; }
+
+  .check-box {
+    background: #eff6ff; border: 1.5px solid #93c5fd;
+    border-radius: 8px; padding: 14px 18px;
+    margin: 14px 0; font-size: .85rem; color: #1e3a5f;
+  }
+  .check-box strong { color: #1e40af; }
+  .check-box ul { padding-left: 18px; margin: 6px 0 0; }
+  .check-box li { margin-bottom: 4px; }
+
   .nav-btns {
     display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end;
   }
@@ -458,6 +474,22 @@ const SOPS = [
           <div class="highlight-box">
             <strong>⚠️ Do a Find &amp; Replace (Ctrl+H)</strong> across the entire workbook for the old month string (e.g. "May") → "June" to ensure nothing is missed. Review results before accepting all.
           </div>
+
+          <h4>Why this step?</h4>
+          <div class="why-box">
+            <strong>Consistency &amp; formula integrity.</strong> The prior month's file contains all the correct structure, formulas, and sheet links built over time. Rebuilding from scratch risks missing sheets, breaking formula references, or losing allocation logic. Renaming and updating is faster and safer — it preserves everything that already works and only changes what needs to change.
+          </div>
+
+          <h4>How to verify</h4>
+          <div class="check-box">
+            <strong>Before moving to Step 1, confirm:</strong>
+            <ul>
+              <li>File name shows the new month (e.g. "Client-wise GM – June 2026").</li>
+              <li>Every sheet tab that referenced the old month now shows the new month.</li>
+              <li>Column headers and row labels throughout the workbook reflect the new month — no stale "May" references remain.</li>
+              <li>Run <strong>Ctrl+F</strong> and search for the old month name — zero results expected.</li>
+            </ul>
+          </div>
         `
       },
       {
@@ -498,6 +530,23 @@ const SOPS = [
           <div class="highlight-box">
             <strong>Note:</strong> The Salary Split column from the Leaders Mapping pivot is what feeds the leadership salary cost in Step 3.
           </div>
+
+          <h4>Why this step?</h4>
+          <div class="why-box">
+            <strong>FTE is the foundation of all cost allocation.</strong> Every rupee of manpower cost assigned to a client is derived from FTE data. Without accurate, function-wise FTE pivots, it is impossible to know how much of the payroll belongs to each client. Splitting by function (Direct, Ops Support &amp; Quality, Leadership) reflects the reality that each group has a different cost structure and allocation logic.
+          </div>
+
+          <h4>How to verify</h4>
+          <div class="check-box">
+            <strong>Before moving to Step 2, confirm:</strong>
+            <ul>
+              <li>Total Direct FTE in the pivot matches the grand total in the WFM / MRF source file.</li>
+              <li>Total Ops Support + Quality FTE matches the source Ops Support sheet.</li>
+              <li>All leaders are captured in the Leaders Mapping sheet — no employee is missing.</li>
+              <li>Sum of all Split % values for each leader across their projects = 100%.</li>
+              <li>No client appears in the source but is missing from the pivot (scroll to confirm all clients are listed).</li>
+            </ul>
+          </div>
         `
       },
       {
@@ -528,6 +577,23 @@ const SOPS = [
           <div class="highlight-box">
             <strong>⚠️ Reconciliation is mandatory.</strong> A mismatch in FTE at this stage will cascade errors into salary costs, cost allocation, and the final gross profit figure.
           </div>
+
+          <h4>Why this step?</h4>
+          <div class="why-box">
+            <strong>Brings allocation data into the working sheet.</strong> The pivots built in Step 1 live in separate sheets — this step pulls them into the Client-wise GM sheet so that salary calculations in Step 3 can be done in one place. SUMIF is used rather than a simple reference because client names may not always match exactly across files, and SUMIF allows flexible matching via the dummy mapping column.
+          </div>
+
+          <h4>How to verify</h4>
+          <div class="check-box">
+            <strong>Before moving to Step 3, confirm:</strong>
+            <ul>
+              <li>Sum of Direct FTE column in the GM sheet = Total Direct FTE from the Step 1 pivot.</li>
+              <li>Sum of Ops Support FTE = Ops Support pivot total.</li>
+              <li>Sum of Quality FTE = Quality pivot total.</li>
+              <li>Sum of Leadership FTE = Leaders Mapping pivot total.</li>
+              <li>No client row shows zero FTE where the pivot has a non-zero value — check the dummy mapping column for name mismatches.</li>
+            </ul>
+          </div>
         `
       },
       {
@@ -555,6 +621,22 @@ const SOPS = [
             <li>The Salary Split is already calculated in the <strong>Leaders Mapping pivot</strong> built in Step 1.</li>
             <li>No additional work needed here — reference those figures directly.</li>
           </ul>
+
+          <h4>Why this step?</h4>
+          <div class="why-box">
+            <strong>Converts headcount into rupee cost.</strong> FTE alone tells you how many people are allocated — but gross margin requires the actual salary cost. By joining FTE to the MIS salary data, we translate each client's headcount share into a precise rupee figure. Doing this separately for each function ensures costs are not blended across different pay grades or team types.
+          </div>
+
+          <h4>How to verify</h4>
+          <div class="check-box">
+            <strong>Before moving to Step 4, confirm:</strong>
+            <ul>
+              <li>Total Salary Split for Direct employees = Total Direct payroll from the MIS for that month.</li>
+              <li>Total Salary Split for Ops Support &amp; Quality = Total Ops Support + Quality payroll from the MIS.</li>
+              <li>Total Leadership Salary Split = Total leadership payroll from the MIS.</li>
+              <li>No employee has a blank or zero salary in the VLOOKUP — check for Emp ID mismatches between the MIS and the allocation sheet.</li>
+            </ul>
+          </div>
         `
       },
       {
@@ -581,6 +663,23 @@ const SOPS = [
           <div class="highlight-box">
             <strong>Check:</strong> After populating, verify that no client shows a zero or blank salary where FTE &gt; 0. A missing name match is the most common error at this stage.
           </div>
+
+          <h4>Why this step?</h4>
+          <div class="why-box">
+            <strong>Consolidates all salary costs into the main working sheet.</strong> The salary pivots built in Step 3 are separate sheets — this step pulls each function's cost into the Client-wise GM sheet so that gross margin can be calculated in one view. The dummy name mapping column is critical here: it ensures the VLOOKUP finds the right client even when names are spelled differently across files.
+          </div>
+
+          <h4>How to verify</h4>
+          <div class="check-box">
+            <strong>Before moving to Step 5, confirm:</strong>
+            <ul>
+              <li>Every client with FTE &gt; 0 has a non-zero salary value for all four functions (Direct, Ops Support, Quality, Leadership).</li>
+              <li>Sum of all client Direct salaries in the GM sheet = Direct salary pivot total from Step 3.</li>
+              <li>Sum of all client Ops Support + Quality salaries = combined Ops Support &amp; Quality pivot total.</li>
+              <li>Sum of all client Leadership salaries = Leaders Mapping pivot total.</li>
+              <li>No <code>#N/A</code> or blank cells in any salary column — these indicate a name mismatch in the dummy mapping.</li>
+            </ul>
+          </div>
         `
       },
       {
@@ -606,6 +705,23 @@ const SOPS = [
 
           <div class="highlight-box">
             <strong>Important:</strong> Not all clients use transport. Confirm which clients are on the cab roster before allocating transport costs — do not spread it equally across all clients.
+          </div>
+
+          <h4>Why this step?</h4>
+          <div class="why-box">
+            <strong>Captures all direct costs beyond salaries.</strong> Manpower is the largest cost but not the only one. Facilities, telecom, transport and other COGS are real costs incurred to serve clients — leaving them unallocated would overstate gross profit at the client level. Using FTE as the allocation key is the fairest proxy since larger clients consume more resources proportionally. Transport is treated separately because it is a client-specific cost, not a shared overhead.
+          </div>
+
+          <h4>How to verify</h4>
+          <div class="check-box">
+            <strong>Before moving to Step 6, confirm:</strong>
+            <ul>
+              <li>Sum of allocated Facilities across all clients = Facilities total from the Proforma P&amp;L.</li>
+              <li>Sum of allocated Telecom/Data across all clients = Telecom/Data total from the Proforma P&amp;L.</li>
+              <li>Sum of allocated Other COGS across all clients = Other COGS total from the Proforma P&amp;L.</li>
+              <li>Sum of allocated Transport = Transport total from the Proforma P&amp;L (across cab-using clients only — non-cab clients must show zero).</li>
+              <li>Per-FTE rate × Total FTE = the respective cost total (sanity check on the rate calculation).</li>
+            </ul>
           </div>
         `
       },
@@ -643,6 +759,23 @@ const SOPS = [
 
           <div class="highlight-box">
             <strong>Final check:</strong> Sum of client gross profits = Proforma P&L gross profit. If there is any gap after distributing bench, recheck Step 5 allocations and the revenue tie-out.
+          </div>
+
+          <h4>Why this step?</h4>
+          <div class="why-box">
+            <strong>Bench cost is a real business cost that must be absorbed by clients.</strong> Employees on the bench are not generating revenue but are still on payroll. Spreading this cost across active clients by FTE share reflects the true cost of running the business, not just the cost of deployed headcount. The final reconciliation back to the Proforma P&amp;L is the ultimate quality gate — it confirms that every rupee of cost and revenue has been accounted for and no figure has been double-counted or missed.
+          </div>
+
+          <h4>How to verify</h4>
+          <div class="check-box">
+            <strong>Final reconciliation checklist:</strong>
+            <ul>
+              <li>Sum of all client-wise Revenue = Total Revenue in the Proforma P&amp;L.</li>
+              <li>Sum of all client-wise Gross Profits = Consolidated Gross Profit in the Proforma P&amp;L. This is the primary reconciliation — zero tolerance for a gap.</li>
+              <li>Sum of allocated bench cost across all clients = total bench cost figure.</li>
+              <li>After removing external links, re-check that the gross profit figures are unchanged (values-only verification).</li>
+              <li>File saved with the correct month name and circulated only after this reconciliation passes.</li>
+            </ul>
           </div>
         `
       },
@@ -684,6 +817,22 @@ const SOPS = [
           <div class="highlight-box">
             <strong>Check the header first.</strong> Confirm the column C header shows the correct forecast month before making any edits. Entering data in the wrong column is a common error.
           </div>
+
+          <h4>Why this step?</h4>
+          <div class="why-box">
+            <strong>Prevents data entry into the wrong month column.</strong> The Proforma carries multiple months side by side. Entering a forecast figure into the actuals column (Column B) would corrupt historical data — a mistake that is hard to detect and harder to reverse. Confirming column headers before any edits is the simplest way to eliminate this risk entirely.
+          </div>
+
+          <h4>How to verify</h4>
+          <div class="check-box">
+            <strong>Before moving to Step 1, confirm:</strong>
+            <ul>
+              <li>Column B header = the most recently closed month (e.g. May-2026).</li>
+              <li>Column C header = the forecast month being prepared (e.g. Jun-2026).</li>
+              <li>Both files — Proforma P&amp;L and Annual Budget — are open and showing the correct version (check the file name in the title bar).</li>
+              <li>You are on the <strong>Consolidated P&amp;L MoM $</strong> sheet, not any other sheet in the workbook.</li>
+            </ul>
+          </div>
         `
       },
       {
@@ -697,6 +846,21 @@ const SOPS = [
 
           <div class="highlight-box">
             <strong>Important:</strong> The revenue forecast is provided by the business and is distinct from the budget and the cash-flow revenue line. Do not substitute one for the other. If in doubt, confirm the source with the business team before entry.
+          </div>
+
+          <h4>Why this step?</h4>
+          <div class="why-box">
+            <strong>Revenue is the single most important input in the Proforma.</strong> Every profitability metric — gross profit, gross margin %, EBITDA — flows from the top line. Using the wrong revenue figure (e.g. budget revenue instead of the actual business forecast) would make the entire Proforma misleading. The business team owns the revenue number; Finance's role is to enter it accurately and build costs around it.
+          </div>
+
+          <h4>How to verify</h4>
+          <div class="check-box">
+            <strong>Before moving to Step 2, confirm:</strong>
+            <ul>
+              <li>Total Revenue entered in Column C matches the exact figure in the business-provided revenue forecast — to the last rupee/dollar.</li>
+              <li>The revenue forecast document/email is saved or referenced so the source can be traced if questioned.</li>
+              <li>The figure entered is <strong>not</strong> from the budget or prior month actuals — it is the current-month business forecast only.</li>
+            </ul>
           </div>
         `
       },
@@ -727,6 +891,22 @@ const SOPS = [
           <div class="highlight-box">
             <strong>Consolidated lines (India + US):</strong> Where a line item appears under the same head in both the India and US sheets — for example, G&amp;A — <strong>add both figures together</strong> and enter the consolidated amount against that single head in the Proforma. Do not create duplicate rows.
           </div>
+
+          <h4>Why this step?</h4>
+          <div class="why-box">
+            <strong>The budget is the approved cost plan for the year.</strong> Linking expenses from the budget ensures the Proforma reflects what the business has committed to spending — not arbitrary estimates. It also creates consistency month to month: every Proforma is built on the same approved baseline, making variance analysis meaningful. Consolidating India and US figures ensures the Proforma shows the full company picture, not just one geography.
+          </div>
+
+          <h4>How to verify</h4>
+          <div class="check-box">
+            <strong>Before moving to Step 4, confirm:</strong>
+            <ul>
+              <li>Every expense line listed (Manpower, Facility, Telecom, Transport, India Salaries, G&amp;A, S&amp;M) has a value entered in Column C — no line should be blank.</li>
+              <li>For consolidated heads (e.g. G&amp;A), the Proforma figure = India budget figure + US budget figure.</li>
+              <li>Spot-check 2–3 lines: trace the figure in Column C back to the exact cell in the budget sheet to confirm the link is correct.</li>
+              <li>Total Operational Expenses in the Proforma recalculates correctly after entry.</li>
+            </ul>
+          </div>
         `
       },
       {
@@ -749,6 +929,22 @@ const SOPS = [
 
           <div class="highlight-box">
             <strong>Why this matters:</strong> If a new cost is only added to the Proforma but not the budget, it will disappear next month when the Proforma is refreshed from the budget. Always update both files.
+          </div>
+
+          <h4>Why this step?</h4>
+          <div class="why-box">
+            <strong>The budget is a plan — the MIS is reality.</strong> Mid-year, new vendors are onboarded, new subscriptions are activated, or statutory obligations change. These costs appear in the MIS before they are formally added to the budget. Skipping this reconciliation means the Proforma understates actual costs, which leads to an inflated gross profit and EBITDA — figures that could mislead management decisions. Updating the budget at the same time ensures the fix is permanent, not just a one-month patch.
+          </div>
+
+          <h4>How to verify</h4>
+          <div class="check-box">
+            <strong>Before moving to Step 5, confirm:</strong>
+            <ul>
+              <li>Every expense head visible in the MIS has a corresponding line in the Proforma — no MIS line is unaccounted for.</li>
+              <li>Any new line added to the Proforma in this step has also been added to the relevant budget sheet (India or US Expenses).</li>
+              <li>Total expenses in the Proforma after adding new heads ties to the total in the MIS (within expected timing differences).</li>
+              <li>The budget file has been saved after updating, so the new line carries forward next month.</li>
+            </ul>
           </div>
         `
       },
@@ -781,6 +977,25 @@ const SOPS = [
 
           <div class="highlight-box">
             <strong>Final step:</strong> Once all checks pass, save the file and circulate for review. Do not share before the formula-error check is complete.
+          </div>
+
+          <h4>Why this step?</h4>
+          <div class="why-box">
+            <strong>The last line of defence before the Proforma reaches leadership.</strong> A Proforma with a broken formula or a miscalculated EBITDA can lead to incorrect decisions on headcount, pricing, or investment. This step exists because errors are common — a link can break, a row can be accidentally deleted, or a formula can be overwritten during data entry. Taking 10 minutes to validate every total protects the credibility of the Finance team and the integrity of the report.
+          </div>
+
+          <h4>How to verify</h4>
+          <div class="check-box">
+            <strong>Final sign-off checklist — all must pass before circulating:</strong>
+            <ul>
+              <li><strong>Total Revenue</strong> = business-provided revenue forecast (matches Step 1 entry).</li>
+              <li><strong>Gross Profit</strong> = Total Revenue − Total Operational Expenses (formula calculates correctly).</li>
+              <li><strong>Gross Margin %</strong> = Gross Profit ÷ Total Revenue (no division errors).</li>
+              <li><strong>EBITDA</strong> = Gross Profit − S&amp;M − SG&amp;A (ties out correctly).</li>
+              <li>No <code>#REF!</code>, <code>#DIV/0!</code>, or <code>#N/A</code> errors anywhere in the sheet.</li>
+              <li>2–3 individual expense lines traced back to the budget column — figures match exactly.</li>
+              <li>File saved with the correct month name before sharing.</li>
+            </ul>
           </div>
         `
       },
