@@ -103,6 +103,7 @@
   }
   .sop-card:nth-child(1)::before { background: linear-gradient(90deg, #1a56a8, #0ea5e9); }
   .sop-card:nth-child(2)::before { background: linear-gradient(90deg, #7c3aed, #db2777); }
+  .sop-card:nth-child(3)::before { background: linear-gradient(90deg, #047857, #10b981); }
   .sop-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 12px 40px rgba(26,86,168,.16);
@@ -118,6 +119,7 @@
   }
   .sop-card:nth-child(1) .sop-icon { background: #e8f0fb; }
   .sop-card:nth-child(2) .sop-icon { background: #f3e8ff; }
+  .sop-card:nth-child(3) .sop-icon { background: #d1fae5; }
 
   .sop-card h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
   .sop-card p  { font-size: .87rem; color: var(--muted); line-height: 1.6; margin-bottom: 18px; }
@@ -376,6 +378,25 @@
           <span class="badge purple">Finance / FP&A</span>
           <span class="badge green">Monthly</span>
           <span class="badge purple">Excel</span>
+        </div>
+        <div class="arrow-btn" style="margin-top:18px;">
+          View Workflow
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="sop-card" onclick="openSOP(2)">
+        <span class="step-count">8 Steps</span>
+        <div class="sop-icon">💰</div>
+        <h2>Cashflow Forecast</h2>
+        <p>Builds and refreshes the monthly consolidated cashflow forecast for iMagnum — projecting inflows, outflows and closing balances for US and India entities, rolled into a single consolidated view.</p>
+        <div class="sop-meta">
+          <span class="badge green">Finance / FP&A</span>
+          <span class="badge green">Monthly</span>
+          <span class="badge green">Excel</span>
         </div>
         <div class="arrow-btn" style="margin-top:18px;">
           View Workflow
@@ -995,6 +1016,374 @@ const SOPS = [
               <li>No <code>#REF!</code>, <code>#DIV/0!</code>, or <code>#N/A</code> errors anywhere in the sheet.</li>
               <li>2–3 individual expense lines traced back to the budget column — figures match exactly.</li>
               <li>File saved with the correct month name before sharing.</li>
+            </ul>
+          </div>
+        `
+      },
+    ]
+  }
+  ,
+  {
+    id: 2,
+    title: "Cashflow Forecast",
+    subtitle: "iMagnum Healthcare Solutions — Consolidated, US & India Monthly Cashflow",
+    function: "Finance / FP&A - CFO",
+    entity: "iMagnum Healthcare Solutions",
+    frequency: "Monthly (rolling)",
+    purpose: "Describes how to build and refresh the iMagnum monthly cashflow forecast. The model projects opening balance, inflows, outflows and closing balance for the US and India entities separately, and rolls them into a consolidated view — carrying actuals up to the latest closed month and forecasting forward to December 2026.",
+    sources: [
+      { num:"1", name:"Budget v10 – Revenue Buildup 2026", use:"Copy the Revenue Buildup 2026 sheet plus its references (Base Revenue, Base Revenue Details). Located in: SRF Client Database → SP-27-CFO-Imagnum → 2026 Budget." },
+      { num:"2", name:"Budget v9 – Expense sheets", use:"Copy 5. US Expense and the India expense detailed sheet. Same 2026 Budget folder. These become the XLOOKUP source for forecast months." },
+      { num:"3", name:"Latest MIS", use:"Copy Holding detailed expense summary (US) and Subsidiary detailed expenses summary (India). Located in: 2026-2027 → 01. April 2026 → Financial Control → MIS Report." },
+      { num:"4", name:"Bank Statements + QuickBooks", use:"Bank of America (US) and HDFC Current + HDFC OD (India). Located in: 01. April 2026 → Financial Control → Bank Statements. Exclude credit-card balances." },
+      { num:"5", name:"AR / AP details", use:"Obtained from the relevant CFO-team contact each month. Drives the AR Aging inflow and AP Aging outflow lines." },
+    ],
+    steps: [
+      {
+        num: "0",
+        title: "Create the workbook template",
+        summary: "Set up the workbook with three stacked tables (Consolidated, US, India), month columns, and the TP% reference cell.",
+        detail: `
+          <h4>What to do</h4>
+          <p>Create a new workbook named <strong>Cashflow Forecast</strong> with one main sheet holding three stacked tables:</p>
+          <ul>
+            <li><strong>Consolidated</strong> (top) — every line is a formula referencing US + India; nothing keyed in directly.</li>
+            <li><strong>US</strong> — the US entity's own inflows and outflows, in USD.</li>
+            <li><strong>India</strong> — the India entity's own inflows and outflows, in USD.</li>
+          </ul>
+
+          <h4>Layout</h4>
+          <ul>
+            <li>Months run across the columns: <code>Apr-26 → Dec-26</code>.</li>
+            <li>Inflow heads: <code>Projected Revenue</code>, <code>Outstanding Invoice / AR</code>.</li>
+            <li>Outflow heads: <code>Operational Expense</code>, <code>S&amp;M</code>, <code>G&amp;A</code>, <code>Manpower</code>, <code>Vendor Payments / AP</code>, <code>Finance &amp; Statutory</code>.</li>
+          </ul>
+
+          <h4>Transfer Pricing (TP) cell</h4>
+          <p>Add a single <strong>TP %</strong> reference cell at the top of the sheet (e.g. 10%). This drives India's inter-company revenue:</p>
+          <p><code>India Inflow from Projected Revenue = India Total Outflow × (1 + TP%)</code></p>
+          <p>In the US table, the same amount appears as <strong>India Cost</strong> outflow. In the Consolidated table, the inter-company leg nets out — only external revenue shows.</p>
+
+          <div class="highlight-box">
+            <strong>Important:</strong> Keep TP as one referenced cell so the whole model flexes when the rate changes. Never hard-code TP% into individual cells.
+          </div>
+
+          <h4>Why this step?</h4>
+          <div class="why-box">
+            <strong>The architecture determines the model's integrity.</strong> By separating US and India into their own tables and making Consolidated purely formula-driven, you prevent manual errors and double-counting. The TP% cell ensures the inter-company transfer is consistent across all months and entities — changing it once updates the entire model automatically.
+          </div>
+
+          <h4>How to verify</h4>
+          <div class="check-box">
+            <strong>Before moving to Step 1, confirm:</strong>
+            <ul>
+              <li>Three tables exist on the main sheet in order: Consolidated → US → India.</li>
+              <li>Every Consolidated line is a formula (= US line + India line) — no hard-coded values.</li>
+              <li>Month columns run Apr-26 to Dec-26 consistently across all three tables.</li>
+              <li>TP% cell exists at the top and India's Projected Revenue inflow references it correctly.</li>
+              <li>US table has an <strong>India Cost</strong> outflow line that mirrors India's inter-company revenue.</li>
+            </ul>
+          </div>
+        `
+      },
+      {
+        num: "1",
+        title: "Bring in revenue",
+        summary: "Copy Revenue Buildup 2026 and its reference sheets from Budget v10 and link to the Projected Revenue inflow line.",
+        detail: `
+          <h4>What to do</h4>
+          <ul>
+            <li>Copy <strong>Revenue Buildup 2026</strong> and its two reference sheets (<strong>Base Revenue</strong>, <strong>Base Revenue Details</strong>) from <strong>Budget v10</strong> into the Cashflow Forecast workbook.</li>
+            <li>Repoint all internal references so they link within the current workbook — not back to the Budget v10 file.</li>
+            <li>Connect the <strong>Inflow from Projected Revenue</strong> line in both the <strong>US</strong> table and the <strong>Consolidated</strong> table to the total revenue row in Revenue Buildup 2026.</li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>Note:</strong> Do not manually key in revenue figures. The Revenue Buildup sheet is the single source of truth for projected revenue — all inflow cells must reference it via formula.
+          </div>
+
+          <h4>Why this step?</h4>
+          <div class="why-box">
+            <strong>Revenue is the primary inflow driver.</strong> Copying from Budget v10 ensures the cashflow uses the same approved revenue plan as every other financial model. Relinking references to the current workbook makes the file self-contained — so it can be shared without broken external links. The Consolidated table picks it up automatically since it references the US table.
+          </div>
+
+          <h4>How to verify</h4>
+          <div class="check-box">
+            <strong>Before moving to Step 2, confirm:</strong>
+            <ul>
+              <li>Revenue Buildup 2026, Base Revenue, and Base Revenue Details sheets are all present in the workbook.</li>
+              <li>No external file links remain — check via <strong>Data → Edit Links</strong>; no Budget v10 link should appear.</li>
+              <li>Projected Revenue inflow in the US table = Revenue Buildup 2026 total for each month.</li>
+              <li>Consolidated Projected Revenue = US Projected Revenue (India's external revenue flows separately via TP).</li>
+            </ul>
+          </div>
+        `
+      },
+      {
+        num: "2",
+        title: "Bring in budgeted expenses",
+        summary: "Copy the US and India expense sheets from Budget v9 — these are the XLOOKUP source for all forecast months.",
+        detail: `
+          <h4>What to do</h4>
+          <ul>
+            <li>Copy <strong>5. US Expense</strong> and the <strong>India expense detailed</strong> sheet from <strong>Budget v9</strong> into the workbook.</li>
+            <li>Rename them: <code>US Expenses-Budgeted</code> and <code>India Expenses - Budgeted</code>.</li>
+            <li>These sheets serve as the <strong>XLOOKUP source</strong> for all forecast months in Step 4 — they are reference sheets only and should not be edited.</li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>Important:</strong> Keep the budgeted sheets separate from the actuals sheets. Mixing them will break the XLOOKUP logic in Step 4.
+          </div>
+
+          <h4>Why this step?</h4>
+          <div class="why-box">
+            <strong>The budget is the approved cost plan for the forecast period.</strong> Bringing it in as a standalone reference sheet means the forecast months can be populated automatically via XLOOKUP, rather than manually keyed. Keeping budget and actuals in separate sheets also makes it easy to compare what was planned vs. what actually happened.
+          </div>
+
+          <h4>How to verify</h4>
+          <div class="check-box">
+            <strong>Before moving to Step 3, confirm:</strong>
+            <ul>
+              <li>Two sheets exist: <code>US Expenses-Budgeted</code> and <code>India Expenses - Budgeted</code>.</li>
+              <li>No external links to Budget v9 remain — these sheets must be self-contained copies.</li>
+              <li>Expense line names and layout match what the cashflow outflow rows expect (so XLOOKUPs in Step 4 will resolve correctly).</li>
+            </ul>
+          </div>
+        `
+      },
+      {
+        num: "3",
+        title: "Bring in actual expenses (MIS)",
+        summary: "Copy MIS actuals for US and India, convert India INR to USD, group sub-categories under main heads.",
+        detail: `
+          <h4>What to do</h4>
+          <p>From the <strong>Latest MIS</strong>, copy:</p>
+          <ul>
+            <li><strong>Holding detailed expense summary</strong> → rename to <code>US Expenses</code></li>
+            <li><strong>Subsidiary detailed expenses summary</strong> → rename to <code>India Expenses</code></li>
+          </ul>
+
+          <h4>Highlight and group actuals</h4>
+          <ul>
+            <li>Highlight the expense <strong>totals</strong> and group all prior-month data through <strong>April 2026</strong> for both entities.</li>
+          </ul>
+
+          <h4>India INR → USD conversion</h4>
+          <ul>
+            <li>Hold the exchange rate in a <strong>separate reference cell</strong>.</li>
+            <li>Insert a matching set of columns alongside the INR columns, convert the figures using the rate, and <strong>hide the original rupee columns</strong>.</li>
+            <li>All India figures in the cashflow must be in USD.</li>
+          </ul>
+
+          <h4>Grouping</h4>
+          <ul>
+            <li>Group all sub-expense categories under their <strong>main expense category</strong> for both entities (e.g. individual salary lines grouped under Manpower).</li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>Important:</strong> Never delete the INR columns — hide them. They may be needed for reference or audit.
+          </div>
+
+          <h4>Why this step?</h4>
+          <div class="why-box">
+            <strong>Actuals anchor the model to reality.</strong> The MIS reflects what was actually spent — not what was planned. Bringing actuals in for closed months ensures the cashflow is grounded in real numbers, not estimates. Converting India to USD is essential for consolidation — mixing currencies would make the Consolidated table meaningless. Grouping sub-categories keeps the cashflow clean and readable at the summary level.
+          </div>
+
+          <h4>How to verify</h4>
+          <div class="check-box">
+            <strong>Before moving to Step 4, confirm:</strong>
+            <ul>
+              <li>Both US Expenses and India Expenses sheets are present with MIS actuals through April 2026.</li>
+              <li>India figures in the USD conversion columns match INR ÷ exchange rate — spot-check 2–3 cells.</li>
+              <li>Original INR columns are hidden, not deleted.</li>
+              <li>Exchange rate is held in a single reference cell (not hard-coded into each formula).</li>
+              <li>Sub-categories are grouped under main heads — expand/collapse works correctly in Excel.</li>
+            </ul>
+          </div>
+        `
+      },
+      {
+        num: "4",
+        title: "Forecast the expenses",
+        summary: "Extend each entity's expenses from April-26 to Dec-26 using XLOOKUP against the budgeted sheets.",
+        detail: `
+          <h4>What to do</h4>
+          <ul>
+            <li>Extend each entity's expense sheet from <strong>April-26 forward to Dec-26</strong>.</li>
+            <li>Use <strong>XLOOKUP</strong> to pull the forecast values from the budgeted sheets (<code>US Expenses-Budgeted</code> and <code>India Expenses - Budgeted</code>) into the forecast month columns.</li>
+          </ul>
+
+          <h4>Add missing expense heads first</h4>
+          <ul>
+            <li>Before running the XLOOKUP, check for any expense head present in the <strong>MIS actuals but missing from the budget</strong>.</li>
+            <li>Add those missing heads to the budgeted sheets so the XLOOKUP can resolve them — otherwise those costs will be zero in the forecast.</li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>Rule:</strong> Actuals columns (closed months) = MIS figures. Forecast columns (open months) = XLOOKUP from budget. Never mix the two in the same column.
+          </div>
+
+          <h4>Why this step?</h4>
+          <div class="why-box">
+            <strong>The forecast must reflect a complete, approved cost base.</strong> XLOOKUP automates the forecast population — avoiding manual re-entry for nine months of data. Checking for missing heads before forecasting ensures no cost drops out of the model just because it wasn't in the original budget. A gap here would understate outflows and overstate closing balances.
+          </div>
+
+          <h4>How to verify</h4>
+          <div class="check-box">
+            <strong>Before moving to Step 5, confirm:</strong>
+            <ul>
+              <li>Every forecast month column (May-26 to Dec-26) is populated for all expense lines — no blanks or zeros where a cost is expected.</li>
+              <li>All XLOOKUP formulas resolve without <code>#N/A</code> errors — each line name in the expense sheet matches exactly the name in the budgeted sheet.</li>
+              <li>Any expense head that appeared in the MIS but was missing from the budget has been added to the budgeted sheet before forecasting.</li>
+              <li>Actuals columns (through April-26) still show MIS figures — XLOOKUP has not overwritten them.</li>
+            </ul>
+          </div>
+        `
+      },
+      {
+        num: "5",
+        title: "Build AR and AP aging",
+        summary: "Create AR Workings, AR Aging, AP Working and AP Aging sheets; populate with SUMIFS using month lag for collection/payment timing.",
+        detail: `
+          <h4>What to do</h4>
+          <p>Get the <strong>AR and AP details</strong> from the relevant CFO-team contact.</p>
+
+          <h4>Sheet structure</h4>
+          <ul>
+            <li><strong>AR Workings</strong> — raw receivables data</li>
+            <li><strong>AR Aging</strong> — months across columns (Apr–Dec 26), clients down rows</li>
+            <li><strong>AP Working</strong> — raw payables data</li>
+            <li><strong>AP Aging</strong> — months across columns (Apr–Dec 26), vendors down rows</li>
+          </ul>
+
+          <h4>SUMIFS formula with month lag</h4>
+          <p>Populate the aging sheets with SUMIFS — criteria 1 = client/vendor, criteria 2 = date. Apply a <strong>month lag</strong> for expected collection/payment timing. Example AR formula:</p>
+          <p><code>=SUMIFS('AR Workings'!$J:$J, 'AR Workings'!$A:$A, 'AR Aging'!$A31, 'AR Workings'!$F:$F, EOMONTH('AR Aging'!AK$27, -'AR Aging'!$B31-1)+1)</code></p>
+
+          <div class="highlight-box">
+            <strong>Critical:</strong> The date format must be <strong>identical</strong> on both the Workings and Aging sheets. A format mismatch will cause SUMIFS to return zero for all rows — the most common error in this step.
+          </div>
+
+          <h4>Link to cashflow</h4>
+          <ul>
+            <li>Link <strong>Inflow from Outstanding Invoice</strong> (US / Consolidated) to the AR Aging collection row.</li>
+            <li>Link <strong>Vendor Payments / AP</strong> (India / Consolidated) to the AP Aging payment row.</li>
+          </ul>
+
+          <h4>Why this step?</h4>
+          <div class="why-box">
+            <strong>Cash timing is different from revenue and cost timing.</strong> Revenue is recognised when invoiced, but cash arrives later — the AR aging captures this lag. Similarly, vendor payments go out on agreed credit terms, not on the day the expense is incurred. Without aging schedules, the cashflow would show cash arriving and leaving in the wrong months, making the closing balances unreliable for decision-making.
+          </div>
+
+          <h4>How to verify</h4>
+          <div class="check-box">
+            <strong>Before moving to Step 6, confirm:</strong>
+            <ul>
+              <li>All four sheets exist: AR Workings, AR Aging, AP Working, AP Aging.</li>
+              <li>Date formats are identical between Workings and Aging sheets — open both and visually confirm (e.g. both show DD/MM/YYYY).</li>
+              <li>SUMIFS totals in AR Aging match total outstanding AR from the source data.</li>
+              <li>SUMIFS totals in AP Aging match total outstanding AP from the source data.</li>
+              <li>AR inflow and AP outflow lines in the cashflow tables are linked to the aging rows — not hard-coded.</li>
+            </ul>
+          </div>
+        `
+      },
+      {
+        num: "6",
+        title: "Set up bank balances",
+        summary: "Create the Bank Balances sheet with opening balances for BofA (US) and HDFC Current + OD (India) from bank statements and QuickBooks.",
+        detail: `
+          <h4>What to do</h4>
+          <ul>
+            <li>Create a <strong>Bank Balances</strong> sheet.</li>
+            <li>Pull balances from the <strong>Bank Statements</strong> folder and the <strong>QuickBooks</strong> bank ledger:</li>
+            <ul>
+              <li><strong>US:</strong> Bank of America</li>
+              <li><strong>India:</strong> HDFC Current + HDFC OD</li>
+            </ul>
+            <li><strong>Exclude</strong> credit-card balances. Add any new bank accounts that have been opened since the last period.</li>
+            <li>Use these figures as the <strong>opening balance of the first forecast month</strong> for each entity.</li>
+            <li>Consolidated opening balance = US opening balance + India opening balance.</li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>Important:</strong> Credit card balances are not bank balances — they are liabilities and are captured under AP/Finance outflows. Including them here would understate the true opening cash position.
+          </div>
+
+          <h4>Why this step?</h4>
+          <div class="why-box">
+            <strong>The opening balance is the starting point of the entire cashflow.</strong> If it is wrong, every closing balance for every subsequent month will be wrong — errors compound forward. Using the bank statement and QuickBooks ledger (rather than estimating) ensures the number is auditable and ties to an external source. Separating US and India balances preserves entity-level visibility, which matters for treasury and compliance purposes.
+          </div>
+
+          <h4>How to verify</h4>
+          <div class="check-box">
+            <strong>Before moving to Step 7, confirm:</strong>
+            <ul>
+              <li>Bank Balances sheet exists with separate rows for BofA, HDFC Current, and HDFC OD.</li>
+              <li>Each balance ties to the bank statement or QuickBooks ledger — note the statement date next to each figure.</li>
+              <li>Credit card balances are absent from this sheet.</li>
+              <li>US opening balance in the cashflow = BofA balance from the Bank Balances sheet.</li>
+              <li>India opening balance = HDFC Current + HDFC OD combined.</li>
+              <li>Consolidated opening balance = US + India (formula, not hard-coded).</li>
+            </ul>
+          </div>
+        `
+      },
+      {
+        num: "7",
+        title: "Wire up, roll forward and quality-check",
+        summary: "Link all outflow lines to expense sheets, set up the closing-balance roll-forward for every month, and run the full QC checklist.",
+        detail: `
+          <h4>Wire up outflow lines</h4>
+          <p>Connect every outflow line in the US and India tables to the matching total on the expense sheets:</p>
+          <ul>
+            <li><strong>Operational Expense</strong> → US Expenses + India Expenses operational total rows</li>
+            <li><strong>S&amp;M Expenses</strong> → US + India S&amp;M total rows</li>
+            <li><strong>G&amp;A</strong> → US + India G&amp;A total rows</li>
+            <li><strong>Manpower Expense</strong> → US + India Manpower total rows</li>
+            <li><strong>Vendor Payments / AP</strong> → AP Aging payment row</li>
+            <li><strong>Finance &amp; Statutory</strong> → US + India Finance / loan total rows</li>
+            <li><strong>India Cost (US table only)</strong> → India Total Outflow × (1 + TP%)</li>
+          </ul>
+
+          <h4>Roll-forward formula</h4>
+          <p>For each month across all three tables:</p>
+          <ul>
+            <li><code>Net Cash Flow = Total Inflow − Total Outflow</code></li>
+            <li><code>Closing Balance = Opening Balance + Net Cash Flow</code></li>
+            <li>Each month's <strong>closing balance feeds the next month's opening balance</strong>.</li>
+          </ul>
+
+          <h4>Quality-control checklist</h4>
+          <ul>
+            <li>Three tables built; every Consolidated line references US + India.</li>
+            <li>TP cell at top; India revenue = India cost × (1 + TP%).</li>
+            <li>Revenue Buildup 2026 copied from v10; all references repointed.</li>
+            <li>Budgeted expense sheets copied from v9 and renamed.</li>
+            <li>MIS actuals copied; India INR converted to USD; rupee columns hidden.</li>
+            <li>Forecast extended to Dec-26 via XLOOKUP; MIS expense heads missing from budget added.</li>
+            <li>AR/AP workings and aging built; SUMIFS with matching date format and month lag.</li>
+            <li>Bank balances set; credit cards excluded; new accounts added.</li>
+            <li>Roll-forward correct: Closing = Opening + (Inflow − Outflow); closing → next opening.</li>
+            <li>All cells linked; <strong>no hard-codes</strong>, no broken <code>#REF!</code> references.</li>
+          </ul>
+
+          <h4>Why this step?</h4>
+          <div class="why-box">
+            <strong>Wiring and roll-forward is where the model becomes live.</strong> Up to this point, the sheets have been built independently. This step connects them into a single, flowing cashflow model. The roll-forward is the core mechanic — without it, each month is an island. The QC checklist exists because a cashflow with hard-coded values or broken links cannot be relied on: one wrong cell can silently corrupt months of closing balances.
+          </div>
+
+          <h4>How to verify</h4>
+          <div class="check-box">
+            <strong>Final sign-off checklist — all must pass before circulating:</strong>
+            <ul>
+              <li>Every outflow line in US and India tables is linked to its source sheet — click into 2–3 cells and confirm the formula reference.</li>
+              <li>Net Cash Flow = Total Inflow − Total Outflow for every month in all three tables.</li>
+              <li>Closing Balance = Opening Balance + Net Cash Flow for every month.</li>
+              <li>Each month's closing balance = next month's opening balance (check at least two consecutive months).</li>
+              <li>Consolidated closing balance = US closing + India closing for every month.</li>
+              <li>No <code>#REF!</code>, <code>#N/A</code>, or <code>#DIV/0!</code> errors anywhere in the workbook.</li>
+              <li>Use <strong>Ctrl+` </strong>(show formulas mode) to scan for any hard-coded numbers in linked cells.</li>
             </ul>
           </div>
         `
